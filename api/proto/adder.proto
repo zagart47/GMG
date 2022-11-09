@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package api;
+
+service ScoreAdder {
+    rpc AddScore(AddRequest) returns (AddResponse) {}
+}
+
+message AddRequest {
+    string user = 1;
+    float time = 2;
+}
+
+message AddResponse{
+    string added = 1;
+}
+
+option go_package = "./";
