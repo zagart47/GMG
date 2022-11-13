@@ -39,8 +39,8 @@ go run .
 Artur Zagirov  
 [@zagart47](https://t.me/zagart47)
 
-````
- TODO
-+ Add DB support
+
+# TODO
+* Add DB support // Done
 * Add Top scores
-+ Add gRPC
+* Add gRPC // Done
