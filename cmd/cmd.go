@@ -1,8 +1,13 @@
 package cmd
 
+/*
+This package provides content that is responsible for displaying information in the app windows
+*/
+
 import (
+	"GMG/db"
 	"GMG/grpc"
-	lang "GMG/language"
+	"GMG/language"
 	"GMG/number"
 	"fmt"
 	"fyne.io/fyne/v2"
@@ -23,50 +28,55 @@ var (
 	EndText     = widget.NewLabel("")
 	Array       [25]int
 	EndTime     float32
+	InputName   = widget.NewEntry()
+	InputEmail  = widget.NewEntry()
 )
 
-func TimeChecker(Start time.Time) time.Duration {
+// TimeSet is used to calculate the time spent to find numbers.
+func TimeSet(Start time.Time) time.Duration {
 	Duration := time.Since(Start)
 	return Duration
 }
 
+// StartApp determines the dimensions of the main window and the dimension of the array for the playing field.
 func StartApp() {
 	StartWindow.Resize(fyne.NewSize(233, 280))
 	for i := 0; i <= 24; i++ {
 		Array[i] = i + 1
 	}
-	Language()
+	LanguageChange()
 	StartWindow.ShowAndRun()
 }
 
-func Language() {
+// LanguageChange allows you to change the language of the program interface
+func LanguageChange() {
 	StartWindow.CenterOnScreen()
 	StartWindow.SetContent(container.NewVBox(
-		lang.LabelLanguage,
-		widget.NewButton(lang.EnglishButton, func() {
-			lang.UpdateLanguage()
+		language.LabelLanguage,
+		widget.NewButton(language.EnglishButton, func() {
+			language.UpdateLanguage()
 			StartWindowContent()
 		}),
-		widget.NewButton(lang.RussianButton, func() {
+		widget.NewButton(language.RussianButton, func() {
 			StartWindowContent()
 		})))
 }
 
 func StartWindowContent() {
 	GameContentUpdater()
-	StartText := widget.NewLabel(lang.StartWindowText)
+	StartText := widget.NewLabel(language.StartWindowText)
 	StartWindow.CenterOnScreen()
 	StartWindow.SetContent(container.NewVBox(
 		StartText,
-		widget.NewButton(lang.StartButtonLabel, func() {
+		widget.NewButton(language.StartButtonLabel, func() {
 			SetUpdatedContent()
 		})))
 }
 
 func NumberChecker(number int) {
 	if number == 25 && Count == 25 {
-		EndTime = float32(TimeChecker(Start).Seconds())
-		EndText.SetText(fmt.Sprintf(lang.ResultText, EndTime))
+		EndTime = float32(TimeSet(Start).Seconds())
+		EndText.SetText(fmt.Sprintf(language.ResultText, EndTime))
 		TextLabel.SetText("")
 		EndContentUpdater()
 	}
@@ -81,27 +91,66 @@ func NumberChecker(number int) {
 func EndContentUpdater() {
 	StartWindow.SetContent(container.NewVBox(
 		EndText,
-		widget.NewButton(lang.SendScoreToDb, func() {
+		widget.NewButton(language.SendScoreToDb, func() {
 			ScoreToDbContent()
 		}),
-		widget.NewButton(lang.RestartButtonLabel, func() {
+		widget.NewButton(language.RestartButtonLabel, func() {
 			Count = 1
 			StartWindowContent()
 		}),
-		widget.NewButton(lang.ExitButtonLabel, func() {
+		widget.NewButton(language.ExitButtonLabel, func() {
+			Game.Quit()
+		})))
+}
+
+func ScoreToDbContent() {
+	var a string
+	InputEmail.SetPlaceHolder("Введите эл.почту...")
+	InputName.SetPlaceHolder("Введите имя...")
+	StartWindow.SetContent(container.NewVBox(
+		EndText,
+		InputName,
+		InputEmail,
+		widget.NewButton(language.SendScoreToDb, func() {
+			if db.EmailCheck(InputEmail.Text) {
+
+			}
+			grpc.ConnectGRPC(InputName.Text, EndTime)
+			a = InputName.Text
+			fmt.Println(a, EndTime)
+			time.Sleep(2 * time.Second)
+			ShowTopContent()
+		}),
+		widget.NewButton(language.RestartButtonLabel, func() {
+			Count = 1
+			StartWindowContent()
+		}),
+		widget.NewButton(language.ExitButtonLabel, func() {
+			Game.Quit()
+		})))
+}
+
+func ShowTopContent() {
+	StartWindow.SetContent(container.NewVBox(
+		db.GetAllFromDb(),
+		widget.NewButton(language.RestartButtonLabel, func() {
+			Count = 1
+			StartWindowContent()
+		}),
+		widget.NewButton(language.ExitButtonLabel, func() {
 			Game.Quit()
 		})))
 }
 
 func ErrorContentUpdater() {
-	ErrorText := widget.NewLabel(lang.ErrorWindowText)
+	ErrorText := widget.NewLabel(language.ErrorWindowText)
 	StartWindow.SetContent(container.NewVBox(
 		ErrorText,
-		widget.NewButton(lang.RestartButtonLabel, func() {
+		widget.NewButton(language.RestartButtonLabel, func() {
 			Count = 1
 			StartWindowContent()
 		}),
-		widget.NewButton(lang.ExitButtonLabel, func() {
+		widget.NewButton(language.ExitButtonLabel, func() {
 			Game.Quit()
 		})))
 }
@@ -215,26 +264,4 @@ func GameContentUpdater() {
 			NumberChecker(Array[24])
 		}),
 	))
-}
-
-func ScoreToDbContent() {
-	var a string
-	input := widget.NewEntry()
-	input.SetPlaceHolder("Введите имя...")
-	StartWindow.SetContent(container.NewVBox(
-		EndText,
-		input,
-		widget.NewButton(lang.SendScoreToDb, func() {
-			grpc.ConnectGRPC(input.Text, EndTime)
-			a = input.Text
-			fmt.Println(a, EndTime)
-			StartWindowContent()
-		}),
-		widget.NewButton(lang.RestartButtonLabel, func() {
-			Count = 1
-			StartWindowContent()
-		}),
-		widget.NewButton(lang.ExitButtonLabel, func() {
-			Game.Quit()
-		})))
 }
