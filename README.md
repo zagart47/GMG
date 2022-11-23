@@ -39,7 +39,9 @@ go build .
 ```
 
 To run client need to create .env file near main.go.
+
 In .env file should have written 1 string:
+
 HOST:{IP where you hosted the server}:80
 
 ```
