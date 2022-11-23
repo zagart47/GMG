@@ -23,9 +23,21 @@ The game is designed to calculate the speed of finding numbers from 1 to 25 in a
 ### Installing
 
 ```
+Server:
+docker pull postgres
+docker run --name postgres -p 5432:5432 -e POSTGRES_PASSWORD={PASSWORD} -e POSTGRES_USER={USERNAME} -d postgres
+git clone https://github.com/zagart47/GMG.git
+cd GMG/server
+docker build -t server .
+docker run --env DBHOST=postgres://{USERNAME}:{PASSWORD}@{DBHOST}:5432/postgres --name server -p 80:80
+go build .
+```
+
+```
+Client:
 git clone https://github.com/zagart47/GMG.git
 cd GMG
-go build .
+go build.go
 ```
 
 ### Executing program
@@ -38,9 +50,3 @@ go run .
 
 Artur Zagirov  
 [@zagart47](https://t.me/zagart47)
-
-
-# TODO
-* Add DB support // Done
-* Add Top scores
-* Add gRPC // Done
