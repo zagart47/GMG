@@ -38,6 +38,10 @@ docker run --env DBHOST=postgres://{USERNAME}:{PASSWORD}@{DBHOST}:5432/postgres 
 go build .
 ```
 
+To run client need to create .env file near main.go.
+In .env file should have written 1 string:
+HOST:{IP where you hosted the server}:80
+
 ```
 Client:
 git clone https://github.com/zagart47/GMG.git
