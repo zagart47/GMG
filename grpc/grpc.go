@@ -6,30 +6,69 @@ import (
 	"fmt"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"log"
 	"os"
 )
 
-func ConnectGRPC(name string, score float32) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	host := os.Getenv("HOST")
-	Conn, err := grpc.Dial(host, grpc.WithInsecure())
+var creds, err2 = credentials.NewClientTLSFromFile("grpc/server.crt", "")
+var err1 = godotenv.Load()
+var Host = os.Getenv("HOST")
+var Conn, err = grpc.Dial(Host, grpc.WithTransportCredentials(creds))
+var Client = api.NewScoreClient(Conn)
+
+func ConnectGRPC() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if err2 != nil {
+		log.Fatal(err2)
+	}
 	defer Conn.Close()
 
-	c := api.NewScoreAdderClient(Conn)
-	res, err := c.AddScore(context.Background(), &api.AddRequest{
-		User: name,
-		Time: score,
+}
+
+// AddUserScore sends a new player and their data to the database
+func AddUserScore(name string, score float32, email string) {
+	res, err := Client.AddScore(context.Background(), &api.AddRequest{
+		User:  name,
+		Time:  score,
+		Email: email,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println(res.GetAdded())
+}
 
+type User struct {
+	Id    int64
+	Name  string
+	Email string
+	Score float64
+}
+
+type UserScore []User
+
+// GetUserScore gets all players and their data from the database
+func GetUserScore() UserScore {
+	res, err := Client.GetScore(context.Background(), &api.GetRequest{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	u := UserScore{}
+
+	for _, v := range res.Score {
+		u = append(u, User{
+			Id:    v.GetId(),
+			Name:  v.GetName(),
+			Email: v.GetEmail(),
+			Score: v.GetScore(),
+		})
+	}
+
+	for _, v := range u {
+		fmt.Printf("%d Имя: %s; Email: %s; Время: %.2f\n", v.Id, v.Name, v.Email, v.Score)
+	}
+	return u
 }

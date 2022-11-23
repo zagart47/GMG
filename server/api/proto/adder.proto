@@ -19,7 +19,7 @@ message GetRequest {
 }
 
 message GetResponse {
-    repeated User score = 1;
+    repeated User scores = 1;
 }
 
 message User {

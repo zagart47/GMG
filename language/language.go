@@ -19,11 +19,12 @@ var (
 		"Вы можете начать игру\n" +
 		"заново нажав кнопку\n" +
 		"\"Перезапуск\"."
-	EnglishButton = "ENGLISH"
-	RussianButton = "RUSSIAN"
-	LabelLanguage = widget.NewLabel("Choose your language:")
-	SendScoreToDb = "Оправить очки в базу"
-	ScoreText     = "Введите имя:"
+	EnglishButton          = "ENGLISH"
+	RussianButton          = "RUSSIAN"
+	LabelLanguage          = widget.NewLabel("Choose your language:")
+	SendScoreToDb          = "Оправить очки в базу"
+	WhatMyPlaceButtonLabel = "Какое место у меня?"
+	ShowUserTopButtonLabel = "Показать Топ-10 игроков"
 )
 
 func UpdateLanguage() {

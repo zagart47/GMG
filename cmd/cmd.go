@@ -5,7 +5,6 @@ This package provides content that is responsible for displaying information in 
 */
 
 import (
-	"GMG/db"
 	"GMG/grpc"
 	"GMG/language"
 	"GMG/number"
@@ -15,6 +14,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -25,7 +25,7 @@ var (
 	GameGrid    = Game.NewWindow("Game")
 	Start       = time.Now()
 	TextLabel   = widget.NewLabel("")
-	EndText     = widget.NewLabel("")
+	Text        = widget.NewLabel("")
 	Array       [25]int
 	EndTime     float32
 	InputName   = widget.NewEntry()
@@ -62,8 +62,10 @@ func LanguageChange() {
 		})))
 }
 
+// StartWindowContent creates a main window of a certain size and places content in it
 func StartWindowContent() {
 	GameContentUpdater()
+	StartWindow.Resize(fyne.NewSize(233, 280))
 	StartText := widget.NewLabel(language.StartWindowText)
 	StartWindow.CenterOnScreen()
 	StartWindow.SetContent(container.NewVBox(
@@ -73,10 +75,11 @@ func StartWindowContent() {
 		})))
 }
 
+// NumberChecker checks during the game the correctness of finding the numbers and in case of an error it opens an error window
 func NumberChecker(number int) {
 	if number == 25 && Count == 25 {
 		EndTime = float32(TimeSet(Start).Seconds())
-		EndText.SetText(fmt.Sprintf(language.ResultText, EndTime))
+		Text.SetText(fmt.Sprintf(language.ResultText, EndTime))
 		TextLabel.SetText("")
 		EndContentUpdater()
 	}
@@ -88,14 +91,14 @@ func NumberChecker(number int) {
 	}
 }
 
+// EndContentUpdater launches a content window where you can submit your points to the database, start a new game, or exit
 func EndContentUpdater() {
 	StartWindow.SetContent(container.NewVBox(
-		EndText,
+		Text,
 		widget.NewButton(language.SendScoreToDb, func() {
 			ScoreToDbContent()
 		}),
 		widget.NewButton(language.RestartButtonLabel, func() {
-			Count = 1
 			StartWindowContent()
 		}),
 		widget.NewButton(language.ExitButtonLabel, func() {
@@ -103,38 +106,37 @@ func EndContentUpdater() {
 		})))
 }
 
+// ScoreToDbContent launches a window with forms for filling out and sending your points to the database
 func ScoreToDbContent() {
-	var a string
 	InputEmail.SetPlaceHolder("Введите эл.почту...")
 	InputName.SetPlaceHolder("Введите имя...")
 	StartWindow.SetContent(container.NewVBox(
-		EndText,
+		Text,
 		InputName,
 		InputEmail,
 		widget.NewButton(language.SendScoreToDb, func() {
-			if db.EmailCheck(InputEmail.Text) {
-
-			}
-			grpc.ConnectGRPC(InputName.Text, EndTime)
-			a = InputName.Text
-			fmt.Println(a, EndTime)
-			time.Sleep(2 * time.Second)
-			ShowTopContent()
-		}),
-		widget.NewButton(language.RestartButtonLabel, func() {
-			Count = 1
-			StartWindowContent()
+			grpc.AddUserScore(InputName.Text, EndTime, InputEmail.Text)
+			ShowUserTopTen()
 		}),
 		widget.NewButton(language.ExitButtonLabel, func() {
 			Game.Quit()
 		})))
 }
 
-func ShowTopContent() {
+// ShowUserTopTen launches a window with the top 10 players
+func ShowUserTopTen() {
+	u := grpc.GetUserScore()
+	var text string
+	for i := 0; i < 10; i++ {
+		text += GetString(u[i].Id, u[i].Name, u[i].Score)
+	}
+	Text.SetText("This is users top score!\n" + text)
 	StartWindow.SetContent(container.NewVBox(
-		db.GetAllFromDb(),
+		Text,
+		widget.NewButton(language.WhatMyPlaceButtonLabel, func() {
+			ShowUserPlace()
+		}),
 		widget.NewButton(language.RestartButtonLabel, func() {
-			Count = 1
 			StartWindowContent()
 		}),
 		widget.NewButton(language.ExitButtonLabel, func() {
@@ -142,12 +144,54 @@ func ShowTopContent() {
 		})))
 }
 
+// GetString converts the input to a string to display in the top players window and show the player's place
+func GetString(id int64, name string, score float64) string {
+	var sId, sName, spaces string
+	if id < 10 {
+		sId = " " + strconv.FormatInt(id, 10)
+	} else if id == 10 {
+		sId = strconv.FormatInt(id, 10)
+	}
+	if len(name) < 16 {
+		for i := 0; i < (16 - len(name)); i++ {
+			sName += " "
+		}
+		spaces = sName
+		sName += name + spaces
+	}
+	return fmt.Sprintf("%v %s %.2f\n", sId, sName, score)
+
+}
+
+// ShowUserPlace shows the player's current position
+func ShowUserPlace() {
+	u := grpc.GetUserScore()
+	var text string
+	for i, v := range u {
+		if v.Email == strings.ToLower(InputEmail.Text) {
+			text = GetString(u[i].Id, u[i].Name, u[i].Score)
+		}
+	}
+	Text.SetText("This is your top score!\n" + text)
+	StartWindow.SetContent(container.NewVBox(
+		Text,
+		widget.NewButton(language.ShowUserTopButtonLabel, func() {
+			ShowUserTopTen()
+		}),
+		widget.NewButton(language.RestartButtonLabel, func() {
+			StartWindowContent()
+		}),
+		widget.NewButton(language.ExitButtonLabel, func() {
+			Game.Quit()
+		})))
+}
+
+// ErrorContentUpdater will open a window with an erroneous selection of a number. It is possible to start the game again and exit
 func ErrorContentUpdater() {
 	ErrorText := widget.NewLabel(language.ErrorWindowText)
 	StartWindow.SetContent(container.NewVBox(
 		ErrorText,
 		widget.NewButton(language.RestartButtonLabel, func() {
-			Count = 1
 			StartWindowContent()
 		}),
 		widget.NewButton(language.ExitButtonLabel, func() {
@@ -155,12 +199,16 @@ func ErrorContentUpdater() {
 		})))
 }
 
+// SetUpdatedContent used when restarting the game to apply a new array to the playing field
 func SetUpdatedContent() {
 	StartWindow.SetContent(container.NewBorder(TextLabel, nil, nil, nil, GameGrid.Content()))
 	Start = time.Now()
 }
 
+// GameContentUpdater puts a new random array into a 5x5 grid. Also resets the number counter
 func GameContentUpdater() {
+	Count = 1
+	StartWindow.Resize(fyne.NewSize(233, 280))
 	number.ArrayShuffler(&Array)
 	GameGrid.SetContent(container.NewGridWithColumns(5,
 		widget.NewButton(strconv.Itoa(Array[0]), func() {
