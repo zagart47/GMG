@@ -21,6 +21,11 @@ The game is designed to calculate the speed of finding numbers from 1 to 25 in a
 * MinGW-W64 for building
 
 ### Installing
+For use this app you need to generate server.key and server.crt by this guide:
+
+https://bbengfort.github.io/2017/03/secure-grpc/
+
+And locate these files in "server" and "grpc" folders.
 
 ```
 Server:
