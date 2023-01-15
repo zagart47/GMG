@@ -27,8 +27,9 @@ https://bbengfort.github.io/2017/03/secure-grpc/
 
 And locate these files in "server" and "grpc" folders.
 
-```
+
 Server:
+```
 docker pull postgres
 docker run --name postgres -p 5432:5432 -e POSTGRES_PASSWORD={PASSWORD} -e POSTGRES_USER={USERNAME} -d postgres
 git clone https://github.com/zagart47/GMG.git
@@ -47,8 +48,9 @@ In .env file should have written 1 string:
 HOST={IP where you hosted the server}:80
 ```
 
-```
+
 Client:
+```
 git clone https://github.com/zagart47/GMG.git
 cd GMG
 go build.go
